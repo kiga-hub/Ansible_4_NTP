@@ -1,0 +1,25 @@
+---
+- name: 生成镜像目录
+  file:
+    path: "{{deployment_dir}}/images"
+    state: directory
+    mode: "0777"
+
+- name: "上传 {{ name }} 镜像文件"
+  copy:
+    src: "{{ machine.src_dir }}/rpm/docker/{{ item }}"
+    dest: "{{ deployment_dir }}/images"
+  with_items: 
+    - "mariadb10.5.4.tar.gz"
+  ignore_errors: false
+
+- name: "加载 {{ name }} 镜像文件"
+  command: "docker load -i {{ deployment_dir }}/images/{{ item }}"
+  with_items: "mariadb10.5.4.tar.gz"
+  ignore_errors: true
+
+- include_tasks: "{{ init_before }}"
+  when: init_before is defined
+
+- include_tasks: "{{ init_after }}"
+  when: init_after is defined

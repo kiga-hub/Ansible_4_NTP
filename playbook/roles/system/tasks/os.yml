@@ -1,0 +1,31 @@
+---
+- name: 获取系统信息
+  setup:
+    filter: ansible_distribution*
+  register: os_info
+
+- name: 提取系统信息
+  set_fact:
+    ansible_distribution: "{{ os_info.ansible_facts.ansible_distribution }}"
+    ansible_distribution_version: "{{ os_info.ansible_facts.ansible_distribution_version }}"
+
+- name: 设置 ansible_python_interpreter
+  set_fact:
+    ansible_python_interpreter: "{{ item.python }}"
+  when: ansible_distribution is search( item.os )
+  with_items:
+    - { os: 'CentOS', 'python': '/usr/bin/python' }
+    - { os: 'KylinSec', 'python': '/usr/bin/python3' }
+
+- name: 不支持的操作系统
+  debug:
+    msg: "操作系统 {{ ansible_distribution }}"
+  when: ansible_python_interpreter is undefined
+
+- name: 退出
+  meta: end_play
+  when: ansible_python_interpreter is undefined
+
+- name: 打印系统信息
+  debug:
+    msg: "操作系统: {{ ansible_distribution }} {{ ansible_distribution_version }}, python: {{ ansible_python_interpreter }}"

@@ -1,0 +1,14 @@
+---
+- import_tasks: init.yml
+
+- name: pip install requests
+  shell: |
+    pip3 install requests  
+
+- import_tasks: deployment.yml
+  vars:
+    name: "deployment_mariadb"
+    deployment_services: "{{ deployment_mariadb }}"
+    init_before: "init_before_mariadb.yml"
+    init_after: "init_after_mariadb.yml"
+  when: _response_result.json.data | default([]) | length == 0

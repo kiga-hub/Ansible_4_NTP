@@ -1,0 +1,35 @@
+---
+- name: 在线安装 NTP 服务
+  yum:
+    name: ntp
+    state: present
+
+- name: 时钟同步
+  block:
+    - name: 同步系统时钟
+      command: "ntpdate -u ntp.aliyun.com"
+      ignore_errors: true
+
+    - name: 同步硬件时钟
+      command: "hwclock -w"
+
+- name: NTP 配置
+  block:
+    - name: 注释 NTP 原配置
+      shell: |
+        sed -i 's/^server.*centos.pool.ntp.org/#&/g' /etc/ntp.conf
+
+    - name: 增加 NTP 配置
+      lineinfile:
+        path: /etc/ntp.conf
+        state: present
+        line: "{{ item }}"
+      with_items:
+        - server 127.127.1.0
+        - Fudge 127.127.1.0 stratum 10
+
+- name: 重启 NTP 服务
+  service:
+    name: ntpd
+    state: restarted
+    enabled: yes

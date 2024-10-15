@@ -1,0 +1,8 @@
+- hosts: "{{ machine.ip }}"
+  gather_facts: false
+  any_errors_fatal: True
+  vars_files:
+    - ./config.yml
+  roles:
+    - {role: system, tags: ['ntp', 'app']}
+    - {role: middleware, tags: ['middleware','docker', 'app']}

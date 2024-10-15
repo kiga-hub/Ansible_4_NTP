@@ -1,0 +1,69 @@
+---
+# - name: 在线安装 docker 任务组
+#   block:
+#   - name: 下载 docker 安装包
+#     get_url:
+#       url: "https://download.docker.com/linux/static/stable/x86_64/docker-20.10.3.tgz"
+#       dest: "{{ deployment_dir  }}/docker/docker-20.10.3.tgz"
+#       validate_certs: false
+#   - name: 下载 docker-rootless-extras 安装包
+#     get_url:
+#       url: "https://download.docker.com/linux/static/stable/x86_64/docker-rootless-extras-20.10.3.tgz"
+#       dest: "{{ deployment_dir  }}/docker/docker-rootless-extras-20.10.3.tgz"
+#       validate_certs: false
+#   - name: 下载 docker-compose 可执行文件
+#     get_url:
+#       url: "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-linux-x86_64"
+#       dest: "/usr/local/bin/docker-compose"
+#       mode: "0755"
+#       validate_certs: false
+
+- name: 上传 docker 相关压缩包
+  copy:
+    src: "{{ machine.src_dir }}/rpm/docker/{{ item }}"
+    dest: "{{ deployment_dir }}"
+  with_items:
+    - docker-20.10.3.tgz
+    - docker-rootless-extras-20.10.3.tgz
+
+- name: 上传 docker-compose 程序
+  copy:
+    src: "{{ machine.src_dir }}/rpm/docker/{{ item }}"
+    dest: "/usr/local/bin/docker-compose"
+    mode: "0755"
+  ignore_errors: true
+  with_items:
+    - docker-compose-v2.20.0
+
+- name: 解压安装 docker 相关可执行程序
+  command: tar -zxvf "{{ deployment_dir }}"/"{{ item }}" -C /usr/local/bin --strip-components=1
+  with_items:
+    - docker-20.10.3.tgz
+    - docker-rootless-extras-20.10.3.tgz
+  
+- name: 上传 docker 系统服务配置文件
+  template:
+    src: "docker.service.j2"
+    dest: "/usr/lib/systemd/system/docker.service"
+    mode: "0755"
+
+- name: 重新加载配置
+  command: systemctl daemon-reload
+
+- name: 创建 docker 配置文件目录
+  file:
+    path: /etc/docker
+    state: directory
+
+- name: 上传 docker 配置文件
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: 'daemon.json.j2', dest: '/etc/docker/daemon.json' }
+
+- name: 重启 docker 服务
+  service:
+    name: docker
+    state: restarted
+    enabled: true

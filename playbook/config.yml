@@ -1,0 +1,9 @@
+machine:
+  ip: 192.168.139.201,192.168.139.202
+  hostname: deploy-test
+  dest_dir: '/home'
+  src_dir: '/home/workspace/ntp/backup'
+
+install:
+  ntp: true
+

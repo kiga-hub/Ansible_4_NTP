@@ -1,0 +1,25 @@
+---
+- name: 创建YUM配置备份目录
+  file:
+    path: /etc/yum.repos.d/backup
+    state: directory
+    mode: "0755"
+
+- name: 备份YUM当前配置文件
+  shell: |
+    if ls /etc/yum.repos.d/*.repo 1> /dev/null 2>&1; then
+      mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/backup/
+    fi
+  ignore_errors: true
+
+- name: 上传YUM新配置文件
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: 'CentOS-Base.repo.j2', dest: '/etc/yum.repos.d/CentOS-Base.repo' }
+    - { src: 'epel-testing.repo.j2', dest: '/etc/yum.repos.d/epel-testing.repo' }
+    - { src: 'epel.repo.j2', dest: '/etc/yum.repos.d/epel.repo' }
+    - { src: 'RPM-GPG-KEY-EPEL-7.j2', dest: '/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7' }
+
+

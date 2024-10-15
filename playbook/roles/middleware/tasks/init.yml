@@ -1,0 +1,9 @@
+---
+- name: 初始化变量
+  set_fact:
+    _names: []
+    _images: []
+    _configs: []
+    _deployments: []
+    _workload_ids: []
+    deployment_dir: "/home/rpm/docker"

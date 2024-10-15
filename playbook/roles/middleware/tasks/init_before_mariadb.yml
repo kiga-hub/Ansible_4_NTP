@@ -1,0 +1,39 @@
+---
+- name: 创建 mysql 数据目录
+  file:
+    path: "{{ item.dir }}"
+    mode: "0775"
+    state: directory
+  with_items:
+    - { dir: "{{ machine.dest_dir }}/mariadb/data" }
+
+- name: make mysql config path
+  file:
+    path: "{{ machine.dest_dir }}/mariadb/conf.d"
+    state: directory
+    mode: "0777"
+
+- name: copy mysql config rules
+  copy:
+    src: my.cnf
+    dest: "{{ machine.dest_dir }}/mariadb/conf.d"
+
+- name: 检查 MariaDB 容器是否存在
+  command: "docker inspect mariadb"
+  ignore_errors: true
+  register: mariadb_result
+
+- name: 确保 MariaDB 容器正在运行
+  command: "docker run -d \
+    --name mariadb \
+    --restart always \
+    --network host \
+    -v {{ machine.dest_dir }}/mariadb/conf.d:/etc/mysql/conf.d \
+    -v {{ machine.dest_dir }}/mariadb/data:/var/lib/mysql \
+    -e MYSQL_DATABASE=test \
+    -e MYSQL_ROOT_PASSWORD=password \ 
+    mariadb:10.5.4"
+  when: mariadb_result is failed
+
+- name: wait for 5 seconds for mysql ready
+  pause: seconds=5

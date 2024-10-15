@@ -1,0 +1,95 @@
+---
+- name: 设置主机名称
+  command: "hostnamectl set-hostname {{ machine.hostname }}"
+
+- name: 修改 SELinux 配置
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: SELINUX=disabled
+    create: yes
+  become: yes
+
+- name: SELinux 配置生效
+  command: setenforce 0
+  ignore_errors: true
+
+- name: 内核优化配置
+  lineinfile:
+    path: /etc/sysctl.conf
+    state: present
+    line: "{{ item }}"
+  with_items:
+    - net.core.somaxconn= 2048
+    - vm.overcommit_memory=1
+    - fs.file-max = 100000000
+    - fs.inotify.max_user_watches=99999999
+    - fs.inotify.max_user_instances=65535
+    - net.ipv4.tcp_tw_reuse = 1
+    - net.ipv4.tcp_keepalive_time = 600
+    - net.ipv4.tcp_fin_timeout = 60
+    - net.ipv4.tcp_max_tw_buckets = 5000 
+    - net.ipv4.ip_local_port_range = 1024 65536
+    - net.ipv4.tcp_rmem = 4096 32768 16777216 
+    - net.ipv4.tcp_wmem = 4096 32768 16777216
+    - net.core.netdev_max_backlog = 262144 
+    - net.core.rmem_default = 262144
+    - net.core.wmem_default = 262144
+    - net.core.rmem_max = 2097152
+    - net.core.wmem_max = 2097152 
+    - net.ipv4.tcp_syncookies = 1
+    - net.ipv4.tcp_max_syn_backlog = 262144
+
+- name: 加载配置
+  command: sysctl -p
+
+- name: Limits 配置
+  lineinfile:
+    path: /etc/security/limits.conf
+    state: present
+    line: "{{ item }}"
+  with_items:
+    - root soft nofile 65536
+    - root hard nofile 65536
+    - root soft nproc 65535
+    - root hard nproc 65535
+
+- name: 关闭swap分区
+  shell: |
+    swapoff -a
+    sed -i 's/^[^#].*swap/#&/g' /etc/fstab
+
+- name: 生成工作目录
+  file:
+    path: /home/data
+    state: directory
+    mode: '0755'
+
+- name: 检查 /home/data 是否存在且为目录
+  stat:
+    path: /home/data
+  register: result
+
+- name: 检查 /home/data 目录
+  fail:
+    msg: "/home/data 目录不存在或不是一个目录"
+  when: not result.stat.isdir
+
+- name: 打印成功信息
+  debug:
+    msg: "/home/data 目录存在且为一个目录"
+  when: result.stat.isdir
+  
+# - name: 获取文件系统的静态信息
+#   lineinfile:
+#     path: /etc/fstab
+#     regexp: '^UUID=\w{8}(-\w{4}){3}-\w{12}.+/home/data'
+#     state: absent
+#   check_mode: yes
+#   register: result
+
+# - name: 检查文件系统静态信息
+#   fail:
+#     msg: "data位置没有分区或磁盘"
+#   when: not result.changed
+

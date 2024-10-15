@@ -1,0 +1,11 @@
+deployment_online_tools:
+  - unzip
+  - telnet
+  - ntfs-3g
+  - iftop
+  - iotop
+  - htop
+  - lrzsz
+  - net-tools
+  - sysstat
+  - python3

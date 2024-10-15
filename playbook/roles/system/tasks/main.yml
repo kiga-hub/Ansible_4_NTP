@@ -1,0 +1,43 @@
+---
+- import_tasks: init.yml
+
+- name: 设置部署目录
+  set_fact:
+    deployment_dir: "{{ machine.dest_dir }}/rpm"
+
+- import_tasks: os.yml
+
+- name: 停止服务
+  ignore_errors: yes
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  loop:
+    - chronyd
+    - firewalld
+    - NetworkManager
+
+- name: 更新YUM源
+  import_tasks: yum_repo.yml
+  when: ansible_distribution is search( 'CentOS' )
+
+- import_tasks: yum_tools.yml
+
+- import_tasks: system.yml
+
+- name: NTP服务安装
+  import_tasks: ntp.yml
+  when: install.ntp
+
+- name: NTP服务安装
+  import_tasks: ntp.yml
+  when: install.ntp
+
+- name: 检查Docker是否已安装
+  command: docker ps
+  ignore_errors: yes
+  register: result
+
+- import_tasks: docker.yml
+  when: result.rc != 0

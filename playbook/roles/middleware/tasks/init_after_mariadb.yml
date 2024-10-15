@@ -1,0 +1,20 @@
+---
+# - name: 等待 5 秒
+#   pause:
+#     seconds: "5"
+
+- name: 提取 MariaDB 容器ID
+  command: "docker ps --filter 'name=mariadb' --format '{{\"{{.ID}}\"}}'"
+  register: mariadb_container_id
+
+- name: 设置 MariaDB 容器ID 变量
+  set_fact:
+    _container_id: "{{ mariadb_container_id.stdout }}"
+
+- name: 输出容器ID
+  command: docker ps -q --filter "name=mariadb"
+  register: container_id_output
+
+- name: 显示容器ID
+  debug:
+    msg: "{{ container_id_output.stdout }}"

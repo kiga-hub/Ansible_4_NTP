@@ -1,0 +1,19 @@
+---
+- name: 删除缓存
+  command: "yum clean all"
+
+- name: 重置缓存
+  command: "yum makecache"
+
+- name: 升级
+  command: "yum -y update"
+
+# - name: request
+#   command: "pip install requests"
+
+- name: 在线安装工具
+  yum:
+    update_cache: true
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ deployment_online_tools }}"

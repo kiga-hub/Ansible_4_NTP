@@ -1,0 +1,6 @@
+deployment_mariadb:
+  - name: "mariadb"
+    group: "middleware"
+    version: "10.5.4"
+    configs:
+      - "my.cnf"
